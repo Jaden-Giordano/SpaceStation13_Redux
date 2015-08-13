@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Game:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Game_jar</output-path>
+    <root id="archive" name="Game.jar">
+      <element id="module-output" name="Game" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Libraries/GSON/gson-2.3.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Libraries/LWJGL/jar/lwjgl.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Libraries/Rock-Util/rock-util1.3_01.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Libraries/luaj-3.0.1/lib/luaj-jse-3.0.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../Libraries/commons-io-2.4/commons-io-2.4.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
