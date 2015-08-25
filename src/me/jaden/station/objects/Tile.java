@@ -1,8 +1,6 @@
 package me.jaden.station.objects;
 
-import me.jaden.station.Direction;
 import me.jaden.station.GameObject;
-import me.jaden.station.Station;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.ZeroArgFunction;
@@ -66,7 +64,6 @@ public abstract class Tile extends GameObject {
         this.luaTable.set("getId", new getid(this));
     }
 
-    //Lua Tile lib
     protected class setname extends OneArgFunction {
 
         private Tile t;
@@ -123,46 +120,6 @@ public abstract class Tile extends GameObject {
         @Override
         public LuaValue call() {
             return LuaValue.valueOf(this.t.getId());
-        }
-
-    }
-
-    protected class getdirection extends OneArgFunction {
-
-        private Tile t;
-
-        public getdirection(Tile t) {
-            this.t = t;
-        }
-
-        @Override
-        public LuaValue call(LuaValue dir) {
-            Tile n;
-            if ((n = Station.instance.getGame().getWorld().getRelativeTile(convertToDir(dir.tojstring()), t)) != null) {
-                return n.getLuaTable();
-            }
-            return LuaValue.NIL;
-        }
-
-        private Direction convertToDir(String dir) {
-            if (dir.equalsIgnoreCase("n")) {
-                return Direction.UP;
-            } else if (dir.equalsIgnoreCase("s")) {
-                return Direction.DOWN;
-            } else if (dir.equalsIgnoreCase("e")) {
-                return Direction.RIGHT;
-            } else if (dir.equalsIgnoreCase("w")) {
-                return Direction.LEFT;
-            } else if (dir.equalsIgnoreCase("ne")) {
-                return Direction.UP_RIGHT;
-            } else if (dir.equalsIgnoreCase("nw")) {
-                return Direction.UP_LEFT;
-            } else if (dir.equalsIgnoreCase("se")) {
-                return Direction.DOWN_RIGHT;
-            } else if (dir.equalsIgnoreCase("sw")) {
-                return Direction.DOWN_LEFT;
-            }
-            return Direction.UP;
         }
 
     }

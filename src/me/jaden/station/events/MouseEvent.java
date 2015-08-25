@@ -1,11 +1,8 @@
 package me.jaden.station.events;
 
-import org.luaj.vm2.Lua;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.ZeroArgFunction;
-
-import static org.lwjgl.glfw.GLFW.*;
 
 /**
  * Created by Jaden on 7/24/2015.

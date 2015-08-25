@@ -1,8 +1,8 @@
 package me.jaden.station.tools;
 
-import java.nio.FloatBuffer;
-
 import org.lwjgl.BufferUtils;
+
+import java.nio.FloatBuffer;
 
 /**
  * Created by Jaden on 7/20/2015.

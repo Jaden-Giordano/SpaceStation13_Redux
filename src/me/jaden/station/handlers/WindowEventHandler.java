@@ -4,7 +4,7 @@ import me.jaden.station.Station;
 import me.jaden.station.tools.Constants;
 import org.lwjgl.glfw.GLFWWindowSizeCallback;
 
-import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 
 /**
  * Created by Jaden on 7/21/2015.

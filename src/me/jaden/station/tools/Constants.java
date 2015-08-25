@@ -3,7 +3,6 @@ package me.jaden.station.tools;
 import com.google.gson.Gson;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Date;
 
 /**
@@ -62,9 +61,9 @@ public class Constants {
     }
 
     private static void getDataPath() {
-        if (OSType == "windows") {
+        if (OSType.equalsIgnoreCase("windows")) { // TODO Use later for easier mod implementation...
             dataPath = System.getProperty("user.home") + "\\AppData" + File.separator + "Roaming" + File.separator + "Station" + File.separator;
-        } else if (OSType == "mac" || OSType == "unix" || OSType == "solaris") {
+        } else if (OSType.equalsIgnoreCase("mac") || OSType.equalsIgnoreCase("unix") || OSType.equalsIgnoreCase("solaris")) {
             dataPath = System.getProperty("user.home") + File.separator + "OREGame" + File.separator;
         } else {
             dataPath = Constants.class.getProtectionDomain().getCodeSource().getLocation().toString() + File.separator;

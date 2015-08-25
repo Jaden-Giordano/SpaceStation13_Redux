@@ -1,6 +1,12 @@
 function init(game)
-    print("hi")
     game.linkIdToTile(1, {lua="tile/floor", image="sheets/base.png", sheetId=20})
+	game.linkIdToTile(2601, {lua="tile/conduit/conduit_verticle", image="sheets/power_cond.png", sheetId=16})
+	game.linkIdToTile(2631, {lua="tile/conduit/conduit_horizontal", image="sheets/power_cond.png", sheetId=46})
+	game.linkIdToTile(2609, {lua="tile/conduit/conduit_90_N_E", image="sheets/power_cond.png", sheetId=24})
+	game.linkIdToTile(2603, {lua="tile/conduit/conduit_90_N_W", image="sheets/power_cond.png", sheetId=18})
+	game.linkIdToTile(2621, {lua="tile/conduit/conduit_90_S_E", image="sheets/power_cond.png", sheetId=36})
+	game.linkIdToTile(2615, {lua="tile/conduit/conduit_90_S_W", image="sheets/power_cond.png", sheetId=30})
+	game.linkIdToTile(1699, {lua="tile/LampPH", image="sheets/lighting.png", sheetId=50})
     game.linkIdToTile(2, "tile/wall")
     game.linkIdToTile(3, "tile/door")
 end

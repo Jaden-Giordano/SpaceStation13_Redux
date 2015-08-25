@@ -1,8 +1,8 @@
 package me.jaden.station;
 
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
 import info.rockscode.util.Texture;
 import info.rockscode.util.Vector2f;
+import info.rockscode.util.Vector3f;
 import me.jaden.station.components.AnimationComponent;
 import me.jaden.station.components.RenderComponent;
 import me.jaden.station.events.InteractEvent;
@@ -10,14 +10,12 @@ import me.jaden.station.events.KeyEvent;
 import me.jaden.station.events.MouseEvent;
 import me.jaden.station.tools.Constants;
 import me.jaden.station.tools.TextureLoader;
-import org.luaj.vm2.Lua;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.ThreeArgFunction;
 import org.luaj.vm2.lib.TwoArgFunction;
 import org.luaj.vm2.lib.ZeroArgFunction;
-import org.luaj.vm2.lib.jse.JsePlatform;
 
 import java.io.File;
 import java.util.regex.Matcher;
@@ -27,16 +25,16 @@ import java.util.regex.Matcher;
  */
 public abstract class GameObject {
 
-    protected Vector2f pos;
+    protected Vector3f pos;
     protected boolean solid;
 
     protected RenderComponent renderComponent;
 
-    protected LuaValue lua;
+    protected LuaObject lua;
     protected LuaTable luaTable;
 
     public GameObject() {
-        pos = new Vector2f(0, 0);
+        pos = new Vector3f(0, 0, 0);
 
         createLuaTable();
 
@@ -44,18 +42,22 @@ public abstract class GameObject {
     }
 
     public void onBeginPlay() {
-        this.runLuaFunc("beginPlay");
+        if (this.lua != null) {
+            this.lua.runLuaFunc("beginPlay");
+        }
     }
 
     public void update() {
-        this.runLuaFunc("update");
+        this.lua.runLuaFunc("update");
     }
 
     public void update(double delta) {
         if (this.renderComponent != null) {
             this.renderComponent.update(delta);
         }
-        this.runLuaFunc("update", LuaValue.valueOf(delta));
+        if (this.lua != null) {
+            this.lua.runLuaFunc("update", LuaValue.valueOf(delta));
+        }
     }
 
     public void render() {
@@ -77,11 +79,15 @@ public abstract class GameObject {
     }
 
     public void onInteract(InteractEvent e) {
-        this.runLuaFunc("onInteract", e.getLuaTable());
+        if (this.lua != null) {
+            this.lua.runLuaFunc("onInteract", e.getLuaTable());
+        }
     }
 
     private void createLuaTable() {
         luaTable = LuaValue.tableOf();
+
+        // parent.getPos()
 
         luaTable.set("getPos", new getpos(this));
         luaTable.set("setPos", new setpos(this));
@@ -95,13 +101,14 @@ public abstract class GameObject {
         luaTable.set("getAnimation", new getanimation(this));
         luaTable.set("getGuiHandler", new getguihandler());
         luaTable.set("attachImageFromSheet", new attachimagefromsheet(this));
+        luaTable.set("callFunction", new callfunction(this));
     }
 
-    public Vector2f getPosition() {
+    public Vector3f getPosition() {
         return this.pos;
     }
 
-    public void setPosition(Vector2f v) {
+    public void setPosition(Vector3f v) {
         this.pos = v;
     }
 
@@ -124,54 +131,19 @@ public abstract class GameObject {
     }
 
     public void attachLua(String path) {
-        try {
-            this.lua = JsePlatform.standardGlobals();
-            this.lua.get("dofile").call(LuaValue.valueOf(path + ".lua"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            Station.instance.getLogger().log("Unable to find "+path+".lua");
-        }
-        this.runLuaFunc("init");
+        this.lua = new LuaObject(path, this.getLuaTable());
     }
 
     public LuaTable getLuaTable() {
         return this.luaTable;
     }
 
-    public void runLuaFunc(String func) {
-        if (this.lua != null) {
-            try {
-                LuaValue luaGetLine = this.lua.get(func);
-                if (!luaGetLine.isnil()) {
-                    luaGetLine.call(this.getLuaTable());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                Station.instance.getLogger().log("Unable to run "+func+"()");
-            }
-        }
-    }
-
-    public void runLuaFunc(String func, LuaValue arg) {
-        if (this.lua != null) {
-            try {
-                LuaValue luaGetLine = this.lua.get(func);
-                if (!luaGetLine.isnil()) {
-                    luaGetLine.call(this.getLuaTable(), arg);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                Station.instance.getLogger().log("Unable to run "+func+"()");
-            }
-        }
-    }
-
     public void keyInput(KeyEvent e) {
-        this.runLuaFunc("keyInput", e.getLuaTable());
+        this.lua.runLuaFunc("keyInput", e.getLuaTable());
     }
 
     public void mouseInput(MouseEvent e) {
-        this.runLuaFunc("mouseInput", e.getLuaTable());
+        this.lua.runLuaFunc("mouseInput", e.getLuaTable());
     }
 
     public void setSolid(boolean b) {
@@ -183,7 +155,7 @@ public abstract class GameObject {
     }
 
     public void move(Vector2f delta) {
-        Vector2f temp = this.getPosition().add(delta);
+        Vector3f temp = this.getPosition().add(new Vector3f(delta.x, delta.y, 0));
         if (!Station.instance.getGame().getWorld().overlaps(temp)) {
             this.setPosition(temp);
         }
@@ -203,13 +175,14 @@ public abstract class GameObject {
 
             t.set("x", LuaValue.valueOf(o.getPosition().x));
             t.set("y", LuaValue.valueOf(o.getPosition().y));
+            t.set("z", LuaValue.valueOf(o.getPosition().z));
 
             return t;
         }
 
     }
 
-    protected class setpos extends TwoArgFunction {
+    protected class setpos extends ThreeArgFunction {
 
         private GameObject o;
 
@@ -218,8 +191,8 @@ public abstract class GameObject {
         }
 
         @Override
-        public LuaValue call(LuaValue x, LuaValue y) {
-            o.setPosition(new Vector2f(x.tofloat(), y.tofloat()));
+        public LuaValue call(LuaValue x, LuaValue y, LuaValue z) {
+            o.setPosition(new Vector3f(x.tofloat(), y.tofloat(), z.tofloat()));
 
             return LuaValue.valueOf(0);
         }
@@ -343,7 +316,10 @@ public abstract class GameObject {
 
         @Override
         public LuaValue call(LuaValue id, LuaValue sheet) {
-            this.o.attachRenderComponent(TextureLoader.getTileFromSheet(id.toint(), sheet.tojstring()));
+            String s = sheet.tojstring();
+            s = s.replaceAll("/", Matcher.quoteReplacement(File.separator));
+            s = Constants.assetsPath + s;
+            this.o.attachRenderComponent(TextureLoader.getTileFromSheet(id.toint(), s));
             return LuaValue.valueOf(0);
         }
 
@@ -382,6 +358,21 @@ public abstract class GameObject {
                 return this.o.getAnimationComp().getAnimation().getLuaTable();
             }
             return LuaValue.NIL;
+        }
+
+    }
+
+    protected class callfunction extends TwoArgFunction {
+
+        private GameObject o;
+
+        public callfunction(GameObject o) {
+            this.o = o;
+        }
+
+        @Override
+        public LuaValue call(LuaValue func, LuaValue params) {
+            return o.lua.callFunction(func.tojstring(), params);
         }
 
     }

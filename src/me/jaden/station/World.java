@@ -1,19 +1,18 @@
 package me.jaden.station;
 
 import info.rockscode.util.Vector2f;
+import info.rockscode.util.Vector3f;
 import me.jaden.station.events.KeyEvent;
 import me.jaden.station.events.MouseEvent;
 import me.jaden.station.objects.Player;
-import me.jaden.station.objects.Tile;
 import me.jaden.station.objects.tiles.Space;
 import me.jaden.station.tools.Constants;
 import me.jaden.station.tools.TileRegistry;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.OneArgFunction;
-import org.luaj.vm2.lib.TwoArgFunction;
+import org.luaj.vm2.lib.ThreeArgFunction;
 import org.luaj.vm2.lib.ZeroArgFunction;
-import org.luaj.vm2.lib.jse.JsePlatform;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,48 +23,41 @@ import java.util.List;
  */
 public class World {
 
-    private Tile[][] base;
+    private List<GameObject> objects;
     private String name;
 
     private Space[][] space;
 
-    private List<GameObject> objects;
-
-    private LuaValue lua;
+    private LuaObject lua;
     private LuaTable luaWorld;
 
     public World() {
         this.objects = new ArrayList<GameObject>();
 
-        this.base = new Tile[0][0];
-
         name = "";
-        attachLua(Constants.luaPath+"world"+File.separator+"world");
+
+        createLuaTable();
+        attachLua(Constants.luaPath + "world" + File.separator + "world");
 
         createSpace();
 
-        createLuaTable();
-        this.runLuaFunc("init");
+        if (this.lua != null) {
+            this.lua.runLuaFunc("init");
+        }
     }
 
-    public World(Tile[][] base) {
-        this.objects = new ArrayList<GameObject>();
-
-        this.base = base;
+    public World(List<GameObject> objects) {
+        this.objects = objects;
 
         name = "";
-        attachLua(Constants.luaPath+File.separator+"world"+File.separator+"world");
-
-        space = new Space[100][100];
-        for (int i = 0; i < space.length; i++) {
-            for (int j = 0; j < space[i].length; j++) {
-                space[i][j] = new Space();
-                space[i][j].setPosition(new Vector2f(i * TileRegistry.TILE_SIZE, j * TileRegistry.TILE_SIZE));
-            }
-        }
-
         createLuaTable();
-        this.runLuaFunc("init");
+        attachLua(Constants.luaPath + "world" + File.separator+"world");
+
+        createSpace();
+
+        if (this.lua != null) {
+            this.lua.runLuaFunc("init");
+        }
     }
 
     public void createSpace() {
@@ -79,41 +71,30 @@ public class World {
     }
 
     public void update() {
-        this.runLuaFunc("update");
-        for (int i = 0; i < this.base.length; i++) {
-            for (int j = 0; j < this.base[i].length; j++) {
-                this.base[i][j].update();
-            }
-        }
         for (GameObject i : this.objects) {
             i.update();
         }
-        this.runLuaFunc("update");
+        if (this.lua != null) {
+            this.lua.runLuaFunc("update");
+        }
     }
 
     public void update(double delta) {
-        this.runLuaFunc("update", LuaValue.valueOf(delta));
-        for (int i = 0; i < this.base.length; i++) {
-            for (int j = 0; j < this.base[i].length; j++) {
-                this.base[i][j].update(delta);
-            }
-        }
         for (GameObject i : this.objects) {
             i.update(delta);
         }
-        this.runLuaFunc("update", LuaValue.valueOf(delta));
+        if (this.lua != null) {
+            this.lua.runLuaFunc("update", LuaValue.valueOf(delta));
+        }
     }
 
     public void onBeginPlay() {
-        for (int i = 0; i < this.base.length; i++) {
-            for (int j = 0; j < this.base[i].length; j++) {
-                this.base[i][j].onBeginPlay();
-            }
-        }
         for (GameObject i : this.objects) {
             i.onBeginPlay();
         }
-        this.runLuaFunc("beginPlay");
+        if (this.lua != null) {
+            this.lua.runLuaFunc("beginPlay");
+        }
     }
 
     public void render() {
@@ -122,26 +103,15 @@ public class World {
                 this.space[i][j].render();
             }
         }
-        for (int i = 0; i < this.base.length; i++) {
-            for (int j = 0; j < this.base[i].length; j++) {
-                this.base[i][j].render();
-            }
-        }
         for (GameObject i : this.objects) {
             i.render();
         }
-        this.runLuaFunc("render");
     }
 
     public void cleanUp() {
         for (int i = 0; i < this.space.length; i++) {
             for (int j = 0; j < this.space[i].length; j++) {
                 this.space[i][j].cleanUp();
-            }
-        }
-        for (int i = 0; i < this.base.length; i++) {
-            for (int j = 0; j < this.base[i].length; j++) {
-                this.base[i][j].cleanUp();
             }
         }
         for (GameObject i : this.objects) {
@@ -156,86 +126,80 @@ public class World {
                 this.space[i][j].reconstruct();
             }
         }
-        for (int i = 0; i < this.base.length; i++) {
-            for (int j = 0; j < this.base[i].length; j++) {
-                this.base[i][j].reInit();
-            }
-        }
         for (GameObject i : this.objects) {
             i.reInit();
         }
     }
 
     public void keyInput(KeyEvent e) {
-        for (int i = 0; i < this.base.length; i++) {
-            for (int j = 0; j < this.base[i].length; j++) {
-                this.base[i][j].keyInput(e);
-            }
-        }
         for (GameObject i : this.objects) {
             i.keyInput(e);
         }
-        this.runLuaFunc("keyInput", e.getLuaTable());
+        if (this.lua != null) {
+            this.lua.runLuaFunc("keyInput", e.getLuaTable());
+        }
     }
 
     public void mouseInput(MouseEvent e) {
-        for (int i = 0; i < this.base.length; i++) {
-            for (int j = 0; j < this.base[i].length; j++) {
-                this.base[i][j].mouseInput(e);
-            }
-        }
         for (GameObject i : this.objects) {
             i.mouseInput(e);
         }
-        this.runLuaFunc("mouseInput", e.getLuaTable());
+        if (this.lua != null) {
+            this.lua.runLuaFunc("mouseInput", e.getLuaTable());
+        }
     }
 
-    public Tile getTileAtPos(double x, double y) {
-        for (int i = 0; i < this.base.length; i++) {
-            for (int j = 0; j < this.base[i].length; j++) {
-                Vector2f cpos = Station.instance.getGame().getCamera().getPosition();
-                Vector2f tpos = this.base[i][j].getPosition();
-                if ((x+cpos.x > tpos.x) &&
-                        (x+cpos.x < tpos.x+TileRegistry.TILE_SIZE) &&
-                        (y+cpos.y > tpos.y) &&
-                        (y+cpos.y < tpos.y+TileRegistry.TILE_SIZE)) { // TODO DO NOT USE CONSTANTS WITH THIS JADEN
-                    return this.base[i][j];
+    public List<GameObject> getTileAtPos(float x, float y, float z) {
+        List<GameObject> objs = new ArrayList<GameObject>();
+        for (GameObject o : this.objects) {
+            if (o.getPosition().equals(new Vector3f(x, y, z))) {
+                objs.add(o);
+            }
+        }
+
+        return objs;
+    }
+
+    public boolean overlaps(Vector3f pos) {
+        if (this.objects.size() != 0) {
+            List<GameObject> os = getTileAtPos(pos.x, pos.y, pos.z);
+            if (os.size() > 0) {
+                GameObject o = os.get(0); // TODO CHANGE THIS SHIT TO ALLOW CHECKING ALL TILES INSTEAD OF FIRST FOUND
+                if (o != null) {
+                    if (o.isSolid()) {
+                        return true;
+                    }
+                }
+            }
+            os = getTileAtPos(pos.x + TileRegistry.TILE_SIZE, pos.y, pos.z);
+            if (os.size() > 0) {
+                GameObject o = os.get(0); // TODO CHANGE THIS SHIT TO ALLOW CHECKING ALL TILES INSTEAD OF FIRST FOUND
+                if (o != null) {
+                    if (o.isSolid()) {
+                        return true;
+                    }
+                }
+            }
+            os = getTileAtPos(pos.x, pos.y + TileRegistry.TILE_SIZE, pos.z);
+            if (os.size() > 0) {
+                GameObject o = os.get(0); // TODO CHANGE THIS SHIT TO ALLOW CHECKING ALL TILES INSTEAD OF FIRST FOUND
+                if (o != null) {
+                    if (o.isSolid()) {
+                        return true;
+                    }
+                }
+            }
+            os = getTileAtPos(pos.x + TileRegistry.TILE_SIZE, pos.y + TileRegistry.TILE_SIZE, pos.z);
+            if (os.size() > 0) {
+                GameObject o = os.get(0); // TODO CHANGE THIS SHIT TO ALLOW CHECKING ALL TILES INSTEAD OF FIRST FOUND
+                if (o != null) {
+                    if (o.isSolid()) {
+                        return true;
+                    }
                 }
             }
         }
-        return null;
-    }
-
-    public boolean overlaps(Vector2f pos) {
-        GameObject o = getTileAtPos(pos.x, pos.y);
-        if (o != null) {
-            if (o.isSolid()) {
-                return true;
-            }
-        }
-        o = getTileAtPos(pos.x+TileRegistry.TILE_SIZE, pos.y);
-        if (o != null) {
-            if (o.isSolid()) {
-                return true;
-            }
-        }
-        o = getTileAtPos(pos.x, pos.y+ TileRegistry.TILE_SIZE);
-        if (o != null) {
-            if (o.isSolid()) {
-                return true;
-            }
-        }
-        o = getTileAtPos(pos.x+TileRegistry.TILE_SIZE, pos.y+TileRegistry.TILE_SIZE);
-        if (o != null) {
-            if (o.isSolid()) {
-                return true;
-            }
-        }
         return false;
-    }
-
-    public void setBaseLayer(Tile[][] b) {
-        this.base = b;
     }
 
     public void addObject(GameObject o) {
@@ -254,70 +218,8 @@ public class World {
         return this.name;
     }
 
-    public Tile getRelativeTile(Direction dir, Tile rel) {
-        Tile t;
-        try {
-            if (dir == Direction.UP) {
-                t = this.base[((int) Math.floor(rel.getPosition().x / 32))][((int) Math.floor(rel.getPosition().y) / 32) - 1];
-            } else if (dir == Direction.DOWN) {
-                t = this.base[((int) Math.floor(rel.getPosition().x / 32))][((int) Math.floor(rel.getPosition().y) / 32) + 1];
-            } else if (dir == Direction.RIGHT) {
-                t = this.base[((int) Math.floor(rel.getPosition().x / 32)) + 1][((int) Math.floor(rel.getPosition().y) / 32)];
-            } else if (dir == Direction.LEFT) {
-                t = this.base[((int) Math.floor(rel.getPosition().x / 32)) - 1][((int) Math.floor(rel.getPosition().y) / 32)];
-            } else if (dir == Direction.UP_RIGHT) {
-                t = this.base[((int) Math.floor(rel.getPosition().x / 32)) + 1][((int) Math.floor(rel.getPosition().y) / 32) - 1];
-            } else if (dir == Direction.UP_LEFT) {
-                t = this.base[((int) Math.floor(rel.getPosition().x / 32)) - 1][((int) Math.floor(rel.getPosition().y) / 32) - 1];
-            } else if (dir == Direction.DOWN_RIGHT) {
-                t = this.base[((int) Math.floor(rel.getPosition().x / 32)) + 1][((int) Math.floor(rel.getPosition().y) / 32) + 1];
-            } else if (dir == Direction.DOWN_LEFT) {
-                t = this.base[((int) Math.floor(rel.getPosition().x / 32 - 1))][((int) Math.floor(rel.getPosition().y) / 32) + 1];
-            } else {
-                Station.instance.getLogger().log("This shit is only 2D asshole...");
-                return null;
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-            t = null;
-        }
-        return t;
-    }
-
     public void attachLua(String path) {
-        try {
-            this.lua = JsePlatform.standardGlobals();
-            this.lua.get("dofile").call(LuaValue.valueOf(path + ".lua"));
-        } catch (Exception e) {
-            Station.instance.getLogger().log("Unable to find "+path+".lua");
-        }
-    }
-
-    public void runLuaFunc(String func) {
-        if (this.lua != null) {
-            try {
-                LuaValue luaGetLine = this.lua.get(func);
-                if (!luaGetLine.isnil()) {
-                    luaGetLine.call(this.getLuaTable());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                Station.instance.getLogger().log("Unable to run "+func+"()");
-            }
-        }
-    }
-
-    public void runLuaFunc(String func, LuaValue arg) {
-        if (this.lua != null) {
-            try {
-                LuaValue luaGetLine = this.lua.get(func);
-                if (!luaGetLine.isnil()) {
-                    luaGetLine.call(this.getLuaTable(), arg);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                Station.instance.getLogger().log("Unable to run "+func+"()");
-            }
-        }
+        this.lua = new LuaObject(path, this.getLuaTable());
     }
 
     private void createLuaTable() {
@@ -362,7 +264,7 @@ public class World {
         }
     }
 
-    protected class gettile extends TwoArgFunction {
+    protected class gettile extends ThreeArgFunction {
 
         private World w;
 
@@ -371,8 +273,14 @@ public class World {
         }
 
         @Override
-        public LuaValue call(LuaValue x, LuaValue y) {
-            return this.w.base[x.toint()][y.toint()].getLuaTable();
+        public LuaValue call(LuaValue x, LuaValue y, LuaValue z) {
+            List<GameObject> ts = this.w.getTileAtPos(x.tofloat(), y.tofloat(), z.tofloat());
+            if (ts.size() > 0) {
+                return ts.get(0).getLuaTable();  // TODO CHANGE THIS SHIT TO ALLOW CHECKING ALL TILES INSTEAD OF FIRST FOUND
+            }
+            else {
+                return LuaValue.NIL;
+            }
         }
     }
 

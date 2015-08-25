@@ -8,7 +8,6 @@ import me.jaden.station.tools.WorldLoader;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.TwoArgFunction;
-import org.luaj.vm2.lib.jse.JsePlatform;
 
 import java.io.File;
 import java.util.regex.Matcher;
@@ -24,7 +23,7 @@ public class Game {
 
     private boolean gui;
 
-    private LuaValue lua;
+    private LuaObject lua;
     private LuaTable luaTable;
 
     public Game() {
@@ -32,7 +31,11 @@ public class Game {
 
         this.attachLua(Constants.luaPath + "init");
 
-        world = WorldLoader.loadWorld(Constants.savePath+"worlds"+File.separator+"test");
+        if (this.lua != null) {
+            this.lua.runLuaFunc("init");
+        }
+
+        world = WorldLoader.loadWorld(Constants.savePath+"worlds"+File.separator+"wiremap");
         camera = new Camera();
         guiHandler = new GuiHandler();
 
@@ -108,39 +111,18 @@ public class Game {
         this.gui = true;
     }
 
-    public LuaValue getLuaTable() {
+    public LuaTable getLuaTable() {
         return this.luaTable;
     }
 
     public void attachLua(String path) {
-        this.lua = JsePlatform.standardGlobals();
-        try {
-            this.lua.get("dofile").call(LuaValue.valueOf(path + ".lua"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            Station.instance.getLogger().log("Unable to find "+path+".lua");
-        }
-        this.runLuaFunc("init");
+        this.lua = new LuaObject(path, this.getLuaTable());
     }
 
     private void createLuaTable() {
         this.luaTable = LuaTable.tableOf();
 
         this.luaTable.set("linkIdToTile", new linkidtotile());
-    }
-
-    public void runLuaFunc(String func) {
-        if (this.lua != null) {
-            try {
-                LuaValue luaGetLine = this.lua.get(func);
-                if (!luaGetLine.isnil()) {
-                    luaGetLine.call(this.getLuaTable());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                Station.instance.getLogger().log("Unable to run "+func+"()");
-            }
-        }
     }
 
     protected class linkidtotile extends TwoArgFunction {

@@ -5,12 +5,9 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
 
-import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
-import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
+import java.nio.DoubleBuffer;
 
 import static org.lwjgl.glfw.GLFW.*;
-
-import java.nio.DoubleBuffer;
 
 /**
  * Created by Jaden on 7/21/2015.

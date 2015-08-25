@@ -59,7 +59,7 @@ public class RenderComponent {
             this.tex.bind();
 
             Camera c = Station.instance.getGame().getCamera();
-            glTranslatef(this.parentGameObject.getPosition().x - c.getPosition().x, this.parentGameObject.getPosition().y - c.getPosition().y, 0);
+            glTranslatef(this.parentGameObject.getPosition().x - c.getPosition().x, this.parentGameObject.getPosition().y - c.getPosition().y, -this.parentGameObject.getPosition().z/10);
 
             glEnableClientState(GL_VERTEX_ARRAY);
             glBindBuffer(GL_ARRAY_BUFFER, v_handle);

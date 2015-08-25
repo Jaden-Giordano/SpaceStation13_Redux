@@ -1,8 +1,6 @@
 state = 0 --0 = open, 1 = closed
 
 function init(object)
-    object.setName("door")
-
     anim = object.attachAnimation("tiles/door.png", .06)
     anim.setZone(6, 0)
     anim.stop()

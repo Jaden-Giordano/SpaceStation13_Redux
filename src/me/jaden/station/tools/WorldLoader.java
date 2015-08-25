@@ -1,15 +1,18 @@
 package me.jaden.station.tools;
 
 import com.google.gson.Gson;
+import info.rockscode.util.Vector3f;
+import me.jaden.station.GameObject;
 import me.jaden.station.Station;
-import me.jaden.station.objects.Tile;
 import me.jaden.station.World;
 import me.jaden.station.objects.tiles.CustomTile;
 import org.apache.commons.io.IOUtils;
-import org.luaj.vm2.lib.TwoArgFunction;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,16 +20,26 @@ import java.util.Map;
  */
 public class WorldLoader {
 
-    protected class WorldDataContainer {
-        public String layer;
-        public int[] size;
-        public int[] tiles;
+    public class WorldDataContainer {
 
-        public WorldDataContainer(String layer, int[] size, int[] tiles) {
-            this.layer = layer;
-            this.size = size;
+        public int[] size; // Disregarded... For aidan
+        public TileContainer[] tiles;
+
+        public WorldDataContainer(int[] size, TileContainer[] tiles) {
             this.tiles = tiles;
         }
+    }
+
+    public class TileContainer {
+
+        public int[] pos;
+        public int id;
+
+        public TileContainer(int[] pos, int id) {
+            this.pos = pos;
+            this.id= id;
+        }
+
     }
 
     private static Map<Integer, TileRefContainer> custom = new HashMap<Integer, TileRefContainer>();
@@ -37,12 +50,7 @@ public class WorldLoader {
 
     public static void linkIdToTile(int id, String path, String i_path, int sheetId) {
         Station.instance.getLogger().log("Params Link : "+i_path+" "+sheetId);
-        if (sheetId == -1) {
-            custom.put(id, new TileRefContainer(path, i_path, -1));
-        }
-        else {
-            custom.put(id, new TileRefContainer(path, i_path, sheetId));
-        }
+        custom.put(id, new TileRefContainer(path, i_path, sheetId));
     }
 
     public static World loadWorld(String path) {
@@ -51,52 +59,33 @@ public class WorldLoader {
             InputStream inp = new FileInputStream(path+".station");
             String in = IOUtils.toString(inp, "UTF-8");
 
-            String[] s = in.split(System.lineSeparator());
-
             Gson gson = new Gson();
-            WorldDataContainer worldData = gson.fromJson(s[0], WorldDataContainer.class);
-
+            WorldDataContainer worldData = gson.fromJson(in, WorldDataContainer.class);
             if (worldData == null) {
-                Station.instance.getLogger().log("Unable to load world");
-                return new World();
+                throw new Exception("Unable to load World : "+path+".station "+"(World file may be empty or corupt...");
             }
 
-            world.setBaseLayer(convertTileData(worldData.tiles, worldData.size));
+            List<GameObject> tileList = new ArrayList<GameObject>();
+
+            for (int i = 0; i < worldData.tiles.length; i++) {
+                if (custom.containsKey(worldData.tiles[i].id)) {
+                    TileRefContainer t = custom.get(worldData.tiles[i].id);
+                    tileList.add(new CustomTile(worldData.tiles[i].id, t.lua_path, t.image_path, t.sheetId));
+                    tileList.get(tileList.size()-1).setPosition(new Vector3f((float) (worldData.tiles[i].pos[0]-1) * 32, (float) (worldData.tiles[i].pos[1]-1) * 32, (float) worldData.tiles[i].pos[2]));
+                }
+                else {
+                    tileList.add(TileRegistry.createTile(worldData.tiles[i].id));
+                }
+            }
+
+            world = new World(tileList);
 
             return world;
         } catch (Exception e) {
-            Station.instance.getLogger().log("Error loading file: " + path + ".world");
+            Station.instance.getLogger().log("Error loading file: " + path + ".station");
             e.printStackTrace();
             return world;
         }
-    }
-
-    private static Tile[][] convertTileData(int[] tiles, int[] size) {
-        if (tiles.length > 0) {
-            Tile[][] convertTile = new Tile[size[0]][size[1]];
-
-            for (int j = 0; j < size[1]; j++) {
-                for (int i = 0; i < size[0]; i++) {
-                    if (custom.containsKey(tiles[(size[0]*j)+i])) {
-                        TileRefContainer t = custom.get(tiles[(size[0]*j)+i]);
-                        convertTile[i][j] = new CustomTile(tiles[(size[0]*j)+i], custom.get(tiles[(size[0]*j)+i]).lua_path, t.image_path, t.sheetId);
-                    }
-                    else {
-                        convertTile[i][j] = TileRegistry.createTile(tiles[(size[0] * j) + i]);
-                    }
-                }
-            }
-
-            for (int i = 0; i < convertTile.length; i++) {
-                for (int j = 0; j < convertTile[i].length; j++) {
-                    convertTile[i][j].getPosition().x = i*TileRegistry.TILE_SIZE;
-                    convertTile[i][j].getPosition().y = j*TileRegistry.TILE_SIZE;
-                }
-            }
-
-            return convertTile;
-        }
-        return null;
     }
 
 }

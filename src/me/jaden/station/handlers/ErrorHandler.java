@@ -5,8 +5,6 @@ import me.jaden.station.tools.Constants;
 import org.apache.commons.io.FileUtils;
 import org.lwjgl.glfw.GLFWErrorCallback;
 
-import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -14,6 +12,8 @@ import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+
+import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
 
 /**
  * Created by Jaden on 7/21/2015.
@@ -42,7 +42,7 @@ public class ErrorHandler {
     public void logError(Error error) {
         String msg = null;
         try {
-            msg = error.getMessage().toString();
+            msg = error.getMessage();
         } catch (NullPointerException e) {
             msg = "NoMSG";
         } finally {
@@ -53,7 +53,7 @@ public class ErrorHandler {
     public void logError(Exception exception) {
         String msg = null;
         try {
-            msg = exception.getMessage().toString();
+            msg = exception.getMessage();
         } catch (NullPointerException e) {
             msg = "NoMSG";
         } finally {

@@ -1,11 +1,13 @@
 package me.jaden.station.components;
 
 import info.rockscode.util.Texture;
-import me.jaden.station.*;
+import me.jaden.station.Animation;
+import me.jaden.station.Camera;
+import me.jaden.station.GameObject;
+import me.jaden.station.Station;
 import me.jaden.station.tools.PolygonCreationTool;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL11.glPopMatrix;
 import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL15.glBindBuffer;
 
@@ -43,7 +45,7 @@ public class AnimationComponent extends RenderComponent {
                 this.anim.bind();
 
                 Camera c = Station.instance.getGame().getCamera();
-                glTranslatef(this.parentGameObject.getPosition().x - c.getPosition().x, this.parentGameObject.getPosition().y - c.getPosition().y, 0);
+                glTranslatef(this.parentGameObject.getPosition().x - c.getPosition().x, this.parentGameObject.getPosition().y - c.getPosition().y, -this.parentGameObject.getPosition().z/10);
 
                 glEnableClientState(GL_VERTEX_ARRAY);
                 glBindBuffer(GL_ARRAY_BUFFER, v_handle);

@@ -1,3 +1,4 @@
 Manifest-Version: 1.0
 Main-Class: me.jaden.station.Station
+Class-Path: lwjgl.jar
 

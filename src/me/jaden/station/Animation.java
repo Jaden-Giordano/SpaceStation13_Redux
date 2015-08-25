@@ -1,9 +1,7 @@
 package me.jaden.station;
 
-import info.rockscode.util.Texture;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.ast.Stat;
 import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.TwoArgFunction;
 import org.luaj.vm2.lib.ZeroArgFunction;
@@ -90,12 +88,7 @@ public class Animation {
 
     public void setZone(int start, int end) {
         this.start = start;
-        if (end < start) {
-            this.reversed = true;
-        }
-        else {
-            this.reversed = false;
-        }
+        this.reversed = (end < start)?true:false;
         this.end = end;
         this.frame = start;
     }

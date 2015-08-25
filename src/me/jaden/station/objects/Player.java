@@ -1,18 +1,18 @@
 package me.jaden.station.objects;
 
-import info.rockscode.util.Vector2f;
+import info.rockscode.util.Vector3f;
 import me.jaden.station.GameObject;
 import me.jaden.station.SpriteSheet;
 import me.jaden.station.Station;
 import me.jaden.station.events.InteractEvent;
 import me.jaden.station.events.MouseEvent;
 import me.jaden.station.tools.Constants;
-import me.jaden.station.tools.TextureLoader;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.ZeroArgFunction;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * Created by Jaden on 7/22/2015.
@@ -31,11 +31,11 @@ public class Player extends GameObject {
 
         this.name = "icyhate";
 
-        this.setPosition(new Vector2f(300, 300));
+        this.setPosition(new Vector3f(300, 300, 0));
 
         this.body = new SpriteSheet(Constants.assetsPath+"player"+File.separator+"human.png");
 
-        this.attachRenderComponent(this.body.getAidanProofTexture(facing + 3));
+        this.attachRenderComponent(this.body.getTexture(facing + 3));
 
         this.luaTable.set("getName", new getname(this));
         this.luaTable.set("setName", new setname(this));
@@ -47,11 +47,15 @@ public class Player extends GameObject {
     public void mouseInput(MouseEvent e) {
         super.mouseInput(e);
 
-        Tile t = Station.instance.getGame().getWorld().getTileAtPos(e.getX(), e.getY());
-        if (t != null) {
-            InteractEvent ie = new InteractEvent(this, t, InteractEvent.CLICK);
-            this.onInteract(ie);
-            t.onInteract(ie);
+        List<GameObject> ts = Station.instance.getGame().getWorld().getTileAtPos((float) e.getX(), (float) e.getY(), 0); // TODO Zero is a bad number... For this at least...
+        if (ts.size() > 0) {
+            GameObject t = ts.get(0); // TODO CHANGE THIS SHIT TO ALLOW CHECKING ALL TILES INSTEAD OF FIRST FOUND
+            if (t != null) {
+                Station.instance.getLogger().log("print thingys");
+                InteractEvent ie = new InteractEvent(this, t, InteractEvent.CLICK);
+                this.onInteract(ie);
+                t.onInteract(ie);
+            }
         }
     }
 
@@ -65,7 +69,7 @@ public class Player extends GameObject {
 
     public void setFacing(int f) {
         this.facing = f;
-        this.renderComponent.setTexture(body.getAidanProofTexture(facing+3));
+        this.renderComponent.setTexture(body.getTexture(facing+3));
     }
 
     public class setname extends OneArgFunction {

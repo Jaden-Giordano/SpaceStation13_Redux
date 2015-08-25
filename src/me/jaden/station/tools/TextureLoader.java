@@ -60,14 +60,13 @@ public class TextureLoader {
     }
 
     public static Texture getTileFromBaseSheet(int id) {
-        return base.getTexture(id);
+        return base.getAidanProofTexture(id);
     }
 
     public static Texture getTileFromSheet(int id, String sheet) {
-        if (sheet.equalsIgnoreCase("turf")) {
-            return base.getTexture(id);
-        }
-        return base.getTexture(id);
+
+        SpriteSheet s = new SpriteSheet(sheet);
+        return s.getTexture(id);
     }
 
 }

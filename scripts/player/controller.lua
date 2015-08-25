@@ -43,6 +43,7 @@ end
 function update(object, delta)
 	local move_x = 0
 	local move_y = 0
+	local debuf = false
 
 	if (down) then
 		move_y = move_y + 1
@@ -56,5 +57,15 @@ function update(object, delta)
 	if (right) then
 		move_x = move_x + 1
 	end
-	object.move(move_x*speed*delta, move_y*speed*delta)
+	
+	if(move_x ~= 0 and move_y ~= 0) then
+		debuf = true
+	end
+	
+	
+	if (not debuf) then
+		object.move(move_x*speed*delta, move_y*speed*delta)
+	else
+		object.move(move_x*(speed*0.6)*delta, move_y*(speed*0.6)*delta)
+	end
 end

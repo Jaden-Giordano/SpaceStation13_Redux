@@ -150,11 +150,12 @@ public class Station {
         double ratio = (double) Constants.width / (double) Constants.height;
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        glOrtho(0, Constants.width, Constants.height, 0, -1, 1);
+        glOrtho(0, Constants.width, Constants.height, 0, 11, -1);
         glViewport(0, 0, Constants.width, Constants.height);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glMatrixMode(GL_MODELVIEW);
+        glEnable(GL_DEPTH_TEST);
         if (game != null) {
             game.reInit();
         }
@@ -180,7 +181,7 @@ public class Station {
             delta = (now - lastTime) / ns;
             lastTime = now;
             glfwPollEvents();
-            this.game.update(delta); // Updates game object, propagates to Components to perform physics ect.
+            instance.getGame().update(delta); // Updates game object, propagates to Components to perform physics ect.
             Timer.updateAllTimers(delta);
             // Draw frame
             render();
@@ -208,7 +209,7 @@ public class Station {
     }
 
     public Game getGame() {
-        return this.game;
+        return game;
     }
 
     public Logger getLogger() {
@@ -227,6 +228,7 @@ public class Station {
 
     public void mousePressed(int button, double x, double y) {
         MouseEvent e = new MouseEvent(button, x, y);
+        Station.instance.getLogger().log(String.valueOf(button));
         game.mouseInput(e);
     }
 
